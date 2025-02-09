@@ -1,7 +1,7 @@
 /* docs/script.js */
 
 // Replace with your actual Vercel backend URL (do not include a trailing slash)
-const backendUrl = "https://lyrics-translator-app.vercel.app/";
+const backendUrl = "https://lyrics-translator-app.vercel.app/api";
 
 // Event listener for the "Play Song" button
 document.getElementById("playSongBtn").addEventListener("click", async () => {
