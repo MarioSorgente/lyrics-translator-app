@@ -3,7 +3,6 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
-const { Translate } = require('@google-cloud/translate').v2;
 const deepspeech = require('deepspeech');
 const fs = require('fs');
 const Wav = require('node-wav');
@@ -26,7 +25,7 @@ app.get('/api/song', async (req, res) => {
     return res.status(400).json({ error: 'Artist and title query parameters are required.' });
   }
   try {
-    // Build the search query (you can adjust the query string as needed)
+    // Build the search query for YouTube
     const query = `${artist} ${title} official music video`;
     const youtubeUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${process.env.YOUTUBE_API_KEY}`;
     const youtubeResponse = await axios.get(youtubeUrl);
@@ -35,7 +34,7 @@ app.get('/api/song', async (req, res) => {
     }
     const videoId = youtubeResponse.data.items[0].id.videoId;
 
-    // Use Lyrics.ovh API to fetch lyrics (no API key required)
+    // Fetch lyrics using Lyrics.ovh (free, no API key required)
     const lyricsUrl = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
     const lyricsResponse = await axios.get(lyricsUrl);
     const lyrics = lyricsResponse.data.lyrics;
@@ -52,21 +51,32 @@ app.get('/api/song', async (req, res) => {
 });
 
 /**
- * STEP 6: Translation Endpoint using Google Cloud Translation API
- * - Expects a JSON body with: text and targetLang.
+ * STEP 6: Translation Endpoint using LibreTranslate
+ * - Expects a JSON body with: text, targetLang, and (optionally) sourceLang.
  * - Translates the provided text to the target language.
+ *
+ * Note: LibreTranslate is free to use. The public instance at https://libretranslate.de/ is available,
+ * but for production you may want to self-host your own instance.
  */
-const translate = new Translate();
 app.post('/api/translate', async (req, res) => {
-  const { text, targetLang } = req.body;
+  const { text, targetLang, sourceLang } = req.body;
   if (!text || !targetLang) {
     return res.status(400).json({ error: 'Text and targetLang are required.' });
   }
   try {
-    let [translations] = await translate.translate(text, targetLang);
-    res.json({ translatedText: translations });
+    // Use 'auto' for auto-detection if sourceLang is not provided.
+    const source = sourceLang || 'auto';
+    const libreResponse = await axios.post('https://libretranslate.de/translate', {
+      q: text,
+      source: source,
+      target: targetLang,
+      format: "text"
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    res.json({ translatedText: libreResponse.data.translatedText });
   } catch (error) {
-    console.error('Error in /api/translate:', error);
+    console.error('Error in /api/translate:', error.message);
     res.status(500).json({ error: 'Error translating text.' });
   }
 });
@@ -80,7 +90,7 @@ app.post('/api/translate', async (req, res) => {
 // Load DeepSpeech Model
 let dsModel;
 try {
-  const MODEL_PATH = './deepspeech-models'; // Ensure your model files are here
+  const MODEL_PATH = './deepspeech-models'; // Make sure your model files are in this folder
   const modelFilePath = MODEL_PATH + '/deepspeech-0.9.3-models.pbmm';
   const scorerPath = MODEL_PATH + '/deepspeech-0.9.3-models.scorer';
   dsModel = new deepspeech.Model(modelFilePath);
@@ -99,12 +109,12 @@ app.post('/api/speech', async (req, res) => {
     return res.status(500).json({ error: 'DeepSpeech model not loaded.' });
   }
   try {
-    // Convert base64 string to buffer
+    // Convert the base64 string to a buffer
     const audioBuffer = Buffer.from(audioData, 'base64');
 
-    // Decode WAV file
+    // Decode the WAV file
     const result = Wav.decode(audioBuffer);
-    // Use the first channel (assumes mono; adjust if stereo)
+    // Use the first channel (assumes mono audio)
     const audioFloat32 = result.channelData[0];
     const transcription = dsModel.stt(audioFloat32);
     res.json({ transcription });
@@ -115,7 +125,7 @@ app.post('/api/speech', async (req, res) => {
 });
 
 /**
- * Feedback Endpoint (no changes needed here)
+ * Feedback Endpoint
  */
 app.post('/api/feedback', async (req, res) => {
   const { email, feedback } = req.body;
