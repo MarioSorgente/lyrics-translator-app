@@ -1,31 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lyrics Translator App</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Lyrics Translator App</h1>
   </header>
   <main>
-    <button id="playSongBtn">Play Song</button>
+    <!-- Search Form -->
+    <div id="searchContainer">
+      <input type="text" id="artistInput" placeholder="Enter artist name" />
+      <input type="text" id="titleInput" placeholder="Enter song title" />
+      <button id="playSongBtn">Play Song</button>
+    </div>
 
+    <!-- Video Player (hidden until a song is fetched) -->
+    <div id="videoContainer" style="margin-top: 1rem; display: none;">
+      <iframe
+        id="youtubePlayer"
+        width="560"
+        height="315"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <!-- Lyrics Display -->
     <div id="lyricsContainer">
       <h2>Lyrics</h2>
       <p id="lyricsText">Lyrics will appear here...</p>
     </div>
 
+    <!-- Translation Display (if needed later) -->
     <div id="translationContainer">
       <h2>Translation</h2>
       <p id="translationText">Translation will appear here...</p>
     </div>
 
+    <!-- Feedback Form -->
     <div id="feedbackContainer">
       <h2>Feedback</h2>
-      <input type="email" id="userEmail" placeholder="Your email">
+      <input type="email" id="userEmail" placeholder="Your email" />
       <textarea id="userFeedback" placeholder="Your feedback"></textarea>
       <button id="submitFeedbackBtn">Submit Feedback</button>
     </div>
