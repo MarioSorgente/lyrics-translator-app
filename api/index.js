@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 /**
- * Song & Lyrics Endpoint
+ * GET /song
  * Expects query parameters: artist and title.
  * Searches YouTube for the song video and fetches lyrics using Lyrics.ovh.
  */
@@ -44,8 +44,9 @@ app.get('/song', async (req, res) => {
 });
 
 /**
- * Translation Endpoint using LibreTranslate
+ * POST /translate
  * Expects a JSON body with: text, targetLang, and (optionally) sourceLang.
+ * Translates the provided text using LibreTranslate.
  */
 app.post('/translate', async (req, res) => {
   const { text, targetLang, sourceLang } = req.body;
@@ -53,7 +54,6 @@ app.post('/translate', async (req, res) => {
     return res.status(400).json({ error: 'Text and targetLang are required.' });
   }
   try {
-    // Use 'auto' for source language if not provided.
     const source = sourceLang || 'auto';
     const libreResponse = await axios.post(
       'https://libretranslate.de/translate',
@@ -75,7 +75,8 @@ app.post('/translate', async (req, res) => {
 });
 
 /**
- * Feedback Endpoint
+ * POST /feedback
+ * Expects a JSON body with: email and feedback.
  */
 app.post('/feedback', async (req, res) => {
   const { email, feedback } = req.body;
@@ -84,7 +85,8 @@ app.post('/feedback', async (req, res) => {
 });
 
 /**
- * Basic Test Route
+ * GET /
+ * Basic test route.
  */
 app.get('/', (req, res) => {
   res.send('Backend is running.');
